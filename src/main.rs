@@ -33,31 +33,29 @@ struct ConnectionsResp {
     categories: Vec<ConnectionsCategories>,
 }
 
-#[derive(Deserialize, Debug)]
-struct WebResponse {
-    connections: ConnectionsResp,
-    wordle: WordleResp,
+#[derive(Debug)]
+enum EitherResp<A, B> {
+    Left(Result<A, reqwest::Error>),
+    Right(Result<B, reqwest::Error>),
 }
 
-//fn get_solution(game: char) -> Result<WebResponse, Box<dyn std::error::Error>> {
-fn get_solution(game: char) -> Result<(), Box<dyn std::error::Error>> {
-    match game {
-        'w' => println!("Wordle game!"),
-        'c' => println!("Connections game!"),
-        _ => panic!("Invalid game :("),
-    }
-    Ok(())
+fn get_solution(game: char) -> Result<EitherResp<WordleResp, ConnectionsResp>, Box<dyn std::error::Error>> {
+    let resp = match game {
+        'w' => EitherResp::Left(reqwest::blocking::get(WORDLE_URL)?.json::<WordleResp>()),
+        'c' => EitherResp::Right(reqwest::blocking::get(CONNECTIONS_URL)?.json::<ConnectionsResp>()),
+        _ => panic!("Non-valid game character"),
+    };
+    Ok(resp) 
+
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /*
-    let resp = reqwest::blocking::get(CONNECTIONS_URL)?.json::<ConnectionsResp>();
-    match resp {
-        Ok(response) => println!("{:#?}", response),
-        Err(e) => println!("ERROR: {:#?}", e),
-    }
-    */
 
-    get_solution('a');
+    let site_resp = get_solution('w');
+    match site_resp {
+        Ok(EitherResp::Left(conn_resp)) => println!("Got solution: {:#?}", conn_resp),
+        Ok(EitherResp::Right(wordle_resp)) => println!("Got solution: {:#?}", wordle_resp),
+        Err(_) => println!("Error!!"),
+    }
     Ok(())
 }
