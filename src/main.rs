@@ -81,6 +81,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("w: wordle");
     let user_choice: char = read!();
 
-    let _ = get_solution('c');
+    let _ = get_solution(user_choice);
     Ok(())
 }
