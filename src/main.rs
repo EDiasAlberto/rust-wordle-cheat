@@ -33,29 +33,39 @@ struct ConnectionsResp {
     categories: Vec<ConnectionsCategories>,
 }
 
-#[derive(Debug)]
-enum EitherResp<A, B> {
-    Left(Result<A, reqwest::Error>),
-    Right(Result<B, reqwest::Error>),
+fn handle_wordle_cheat() -> Result<(), Box<dyn std::error::Error>> {
+    let resp = reqwest::blocking::get(WORDLE_URL)?.json::<WordleResp>();
+    match resp {
+        Ok(ansr) => println!("Answer for today's wordle! {:#?}", ansr.solution),
+        Err(e) => println!("Got error!"),
+    }
+
+    Ok(())
 }
 
-fn get_solution(game: char) -> Result<EitherResp<WordleResp, ConnectionsResp>, Box<dyn std::error::Error>> {
+fn handle_connections_cheat() -> Result<(), Box<dyn std::error::Error>> {
+    let resp = reqwest::blocking::get(CONNECTIONS_URL)?.json::<ConnectionsResp>();
+
+    match resp {
+        Ok(ansr) => println!("Got connections answer! Following: {:#?}", ansr),
+        Err(e) => println!("Got error!"),
+    }
+
+    Ok(())
+}
+
+fn get_solution(game: char) -> Result<(), Box<dyn std::error::Error>> {
     let resp = match game {
-        'w' => EitherResp::Left(reqwest::blocking::get(WORDLE_URL)?.json::<WordleResp>()),
-        'c' => EitherResp::Right(reqwest::blocking::get(CONNECTIONS_URL)?.json::<ConnectionsResp>()),
+        'w' => handle_wordle_cheat(),
+        'c' => handle_connections_cheat(),
         _ => panic!("Non-valid game character"),
     };
-    Ok(resp) 
+    Ok(())
 
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
 
-    let site_resp = get_solution('w');
-    match site_resp {
-        Ok(EitherResp::Left(conn_resp)) => println!("Got solution: {:#?}", conn_resp),
-        Ok(EitherResp::Right(wordle_resp)) => println!("Got solution: {:#?}", wordle_resp),
-        Err(_) => println!("Error!!"),
-    }
+    let _ = get_solution('w');
     Ok(())
 }
