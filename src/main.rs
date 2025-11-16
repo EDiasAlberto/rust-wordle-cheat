@@ -43,11 +43,21 @@ fn handle_wordle_cheat() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
+fn render_connections_ansr(answer: ConnectionsResp) {
+    for category in answer.categories {
+        println!("Category Title: {:#?}", category.title);
+        for word in category.cards {
+            print!("{:#?} ", word.content);
+        }
+        println!("\n");
+    }
+}
+
 fn handle_connections_cheat() -> Result<(), Box<dyn std::error::Error>> {
     let resp = reqwest::blocking::get(CONNECTIONS_URL)?.json::<ConnectionsResp>();
 
     match resp {
-        Ok(ansr) => println!("Got connections answer! Following: {:#?}", ansr),
+        Ok(ansr) => render_connections_ansr(ansr),
         Err(e) => println!("Got error!"),
     }
 
@@ -66,6 +76,6 @@ fn get_solution(game: char) -> Result<(), Box<dyn std::error::Error>> {
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
 
-    let _ = get_solution('w');
+    let _ = get_solution('c');
     Ok(())
 }
