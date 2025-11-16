@@ -2,7 +2,7 @@ use serde::Deserialize;
 use chrono::{NaiveDate, offset::Utc};
 use reqwest::blocking::get;
 use std::error::Error;
-use text_io::{read, scan};
+use text_io::{read};
 
 /*
 const WORDLE_URL: &str =
