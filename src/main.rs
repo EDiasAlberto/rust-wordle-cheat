@@ -1,7 +1,8 @@
 use serde::Deserialize;
+use chrono::offset::Utc;
 use reqwest::blocking::get;
 use std::error::Error;
-use text_io::read;
+use text_io::{read, scan};
 
 /*
 const WORDLE_URL: &str =
@@ -55,16 +56,42 @@ fn get_api_url(game: &str, date: &str) -> String {
     full_url
 }
 
+fn validate_date(year: u16, month: u16, day: u16) -> String {
+    let valid_year = (year > 999);
+    let valid_month = (month > 0) & (month < 13);
+    let valid_day = (day > 0) & (day < 32);
+    let valid_date = valid_year & valid_month & valid_day;
+    match valid_date {
+        true => format!("{}-{}-{}", year, month, day),
+        false => Utc::now().date_naive().to_string(),
+    }
+}
+
+fn get_desired_date() -> String {
+    println!("Please input a date in the format YYYY-MM-DD: ");
+    println!("Note: anything invalid will cause the default (today) to be used");
+
+    let year: u16;
+    let month: u16;
+    let day: u16;
+    scan!("{}-{}-{}", year, month, day);
+    validate_date(year, month, day)
+}
+
 // ---------- GAME LOGIC ---------- //
 
 fn print_wordle() -> Result<(), Box<dyn Error>> {
-    let data: WordleResp = fetch_json(&get_api_url("wordle", "2025-11-15"))?;
-    println!("Today's Wordle: {}", data.solution);
+    let validated_date = get_desired_date();
+    let data: WordleResp = fetch_json(&get_api_url("wordle", &validated_date))?;
+    println!("Wordle for {}: {}",validated_date, data.solution);
     Ok(())
 }
 
 fn print_connections() -> Result<(), Box<dyn Error>> {
-    let data: ConnectionsResp = fetch_json(&get_api_url("connections", "2025-11-15"))?;
+    let validated_date = get_desired_date();
+    let data: ConnectionsResp = fetch_json(&get_api_url("connections", &validated_date))?;
+
+    println!("Connections for {}: ", validated_date);
 
     for category in &data.categories {
         println!("Category: {}", category.title);
