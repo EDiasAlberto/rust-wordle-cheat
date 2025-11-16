@@ -1,9 +1,14 @@
 use serde::Deserialize;
+use reqwest::blocking::get;
+use std::error::Error;
 use text_io::read;
 
-const WORDLE_URL: &str = "https://www.nytimes.com/svc/wordle/v2/2025-11-15.json";
+const WORDLE_URL: &str =
+    "https://www.nytimes.com/svc/wordle/v2/2025-11-15.json";
+const CONNECTIONS_URL: &str =
+    "https://www.nytimes.com/svc/connections/v2/2025-11-15.json";
 
-const CONNECTIONS_URL: &str = "https://www.nytimes.com/svc/connections/v2/2025-11-15.json";
+// ---------- MODELS ---------- //
 
 #[derive(Deserialize, Debug)]
 struct WordleResp {
@@ -11,7 +16,7 @@ struct WordleResp {
     solution: String,
     print_date: String,
     days_since_launch: u32,
-    editor: String
+    editor: String,
 }
 
 #[derive(Deserialize, Debug)]
@@ -34,53 +39,68 @@ struct ConnectionsResp {
     categories: Vec<ConnectionsCategories>,
 }
 
-fn handle_wordle_cheat() -> Result<(), Box<dyn std::error::Error>> {
-    let resp = reqwest::blocking::get(WORDLE_URL)?.json::<WordleResp>();
-    match resp {
-        Ok(ansr) => println!("Answer for today's wordle! {:#?}", ansr.solution),
-        Err(e) => println!("Got error!"),
-    }
+// ---------- HELPERS ---------- //
 
+fn fetch_json<T: for<'de> Deserialize<'de>>(url: &str) -> Result<T, Box<dyn Error>> {
+    Ok(get(url)?.json::<T>()?)
+}
+
+// ---------- GAME LOGIC ---------- //
+
+fn print_wordle() -> Result<(), Box<dyn Error>> {
+    let data: WordleResp = fetch_json(WORDLE_URL)?;
+    println!("Today's Wordle: {}", data.solution);
     Ok(())
 }
 
-fn render_connections_ansr(answer: ConnectionsResp) {
-    for category in answer.categories {
-        println!("Category Title: {:#?}", category.title);
-        for word in category.cards {
-            print!("{:#?} ", word.content);
+fn print_connections() -> Result<(), Box<dyn Error>> {
+    let data: ConnectionsResp = fetch_json(CONNECTIONS_URL)?;
+
+    for category in &data.categories {
+        println!("Category: {}", category.title);
+        for word in &category.cards {
+            print!("{} ", word.content);
         }
         println!("\n");
     }
+    Ok(())
 }
 
-fn handle_connections_cheat() -> Result<(), Box<dyn std::error::Error>> {
-    let resp = reqwest::blocking::get(CONNECTIONS_URL)?.json::<ConnectionsResp>();
+enum Game {
+    Wordle,
+    Connections,
+}
 
-    match resp {
-        Ok(ansr) => render_connections_ansr(ansr),
-        Err(e) => println!("Got error!"),
+impl Game {
+    fn from_char(c: char) -> Option<Self> {
+        match c {
+            'w' => Some(Game::Wordle),
+            'c' => Some(Game::Connections),
+            _ => None,
+        }
     }
-
-    Ok(())
 }
 
-fn get_solution(game: char) -> Result<(), Box<dyn std::error::Error>> {
-    let resp = match game {
-        'w' => handle_wordle_cheat(),
-        'c' => handle_connections_cheat(),
-        _ => panic!("Non-valid game character"),
-    };
-    Ok(())
-
+fn run_game(game: Game) -> Result<(), Box<dyn Error>> {
+    match game {
+        Game::Wordle => print_wordle(),
+        Game::Connections => print_connections(),
+    }
 }
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
-    println!("Please choose a game: ");
-    println!("c: connections");
-    println!("w: wordle");
+// ---------- MAIN ---------- //
+
+fn main() -> Result<(), Box<dyn Error>> {
+    println!("Pick a game:");
+    println!("  w -> wordle");
+    println!("  c -> connections");
+
     let user_choice: char = read!();
 
-    let _ = get_solution(user_choice);
+    match Game::from_char(user_choice) {
+        Some(game) => run_game(game)?,
+        None => println!("Invalid choice."),
+    }
+
     Ok(())
 }
