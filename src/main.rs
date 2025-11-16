@@ -1,3 +1,7 @@
+//TODO: Implement for strands
+//TODO: Implement for sudoku (very different)
+
+
 use serde::Deserialize;
 use chrono::{NaiveDate, offset::Utc};
 use reqwest::blocking::get;
