@@ -1,4 +1,5 @@
 use serde::Deserialize;
+use text_io::read;
 
 const WORDLE_URL: &str = "https://www.nytimes.com/svc/wordle/v2/2025-11-15.json";
 
@@ -75,6 +76,10 @@ fn get_solution(game: char) -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+    println!("Please choose a game: ");
+    println!("c: connections");
+    println!("w: wordle");
+    let user_choice: char = read!();
 
     let _ = get_solution('c');
     Ok(())
