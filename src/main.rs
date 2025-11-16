@@ -3,10 +3,15 @@ use reqwest::blocking::get;
 use std::error::Error;
 use text_io::read;
 
+/*
 const WORDLE_URL: &str =
     "https://www.nytimes.com/svc/wordle/v2/2025-11-15.json";
 const CONNECTIONS_URL: &str =
     "https://www.nytimes.com/svc/connections/v2/2025-11-15.json";
+*/
+
+const BASE_URL: &str = 
+    "https://www.nytimes.com/svc";
 
 // ---------- MODELS ---------- //
 
@@ -45,16 +50,21 @@ fn fetch_json<T: for<'de> Deserialize<'de>>(url: &str) -> Result<T, Box<dyn Erro
     Ok(get(url)?.json::<T>()?)
 }
 
+fn get_api_url(game: &str, date: &str) -> String {
+    let full_url: String = format!("{BASE_URL}/{game}/v2/{date}.json");
+    full_url
+}
+
 // ---------- GAME LOGIC ---------- //
 
 fn print_wordle() -> Result<(), Box<dyn Error>> {
-    let data: WordleResp = fetch_json(WORDLE_URL)?;
+    let data: WordleResp = fetch_json(&get_api_url("wordle", "2025-11-15"))?;
     println!("Today's Wordle: {}", data.solution);
     Ok(())
 }
 
 fn print_connections() -> Result<(), Box<dyn Error>> {
-    let data: ConnectionsResp = fetch_json(CONNECTIONS_URL)?;
+    let data: ConnectionsResp = fetch_json(&get_api_url("connections", "2025-11-15"))?;
 
     for category in &data.categories {
         println!("Category: {}", category.title);
